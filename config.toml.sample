@@ -23,6 +23,13 @@ port     = 8086    # binding is disabled if the port isn't set
 # ssl-port = 8084    # Ssl support is enabled if you set a port and cert
 # ssl-cert = /path/to/cert.pem
 
+# OpenTSDB ingestion configuration. If this section is present, we will listen
+# on the given port for TCP connections and will speak the OpenTSDB protocol.
+# Metrics will be stored in the given database.
+[opentsdb]
+port = 4242
+database = ""
+
 # Raft configuration
 [raft]
 # The raft port should be open between all servers in a cluster.

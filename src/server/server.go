@@ -3,6 +3,7 @@ package server
 import (
 	"admin"
 	"api/http"
+	"api/opentsdb"
 	"cluster"
 	log "code.google.com/p/log4go"
 	"configuration"
@@ -20,6 +21,7 @@ type Server struct {
 	ProtobufServer *coordinator.ProtobufServer
 	ClusterConfig  *cluster.ClusterConfiguration
 	HttpApi        *http.HttpServer
+	OpenTSDBApi    *opentsdb.Server
 	AdminServer    *admin.HttpServer
 	Coordinator    coordinator.Coordinator
 	Config         *configuration.Configuration
@@ -57,6 +59,7 @@ func NewServer(config *configuration.Configuration) (*Server, error) {
 	raftServer.AssignCoordinator(coord)
 	httpApi := http.NewHttpServer(config.ApiHttpPortString(), config.AdminAssetsDir, coord, coord, clusterConfig, raftServer)
 	httpApi.EnableSsl(config.ApiHttpSslPortString(), config.ApiHttpCertPath)
+	opentsdbApi := opentsdb.NewServer(config.OpenTSDBPortString(), config.OpenTSDBDatabase, coord, clusterConfig)
 	adminServer := admin.NewHttpServer(config.AdminAssetsDir, config.AdminHttpPortString())
 
 	return &Server{
@@ -64,6 +67,7 @@ func NewServer(config *configuration.Configuration) (*Server, error) {
 		ProtobufServer: protobufServer,
 		ClusterConfig:  clusterConfig,
 		HttpApi:        httpApi,
+		OpenTSDBApi:    opentsdbApi,
 		Coordinator:    coord,
 		AdminServer:    adminServer,
 		Config:         config,
@@ -100,6 +104,10 @@ func (self *Server) ListenAndServe() error {
 	go self.ListenForSignals()
 	log.Info("Starting admin interface on port %d", self.Config.AdminHttpPort)
 	go self.AdminServer.ListenAndServe()
+	if self.Config.OpenTSDBPort > 0 {
+		log.Info("Starting OpenTSDB API server on port %d", self.Config.OpenTSDBPort)
+		go self.OpenTSDBApi.ListenAndServe()
+	}
 	log.Info("Starting Http Api server on port %d", self.Config.ApiHttpPort)
 	self.HttpApi.ListenAndServe()
 	return nil

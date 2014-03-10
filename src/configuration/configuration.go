@@ -62,6 +62,11 @@ type ApiConfig struct {
 	Port        int
 }
 
+type OpenTSDBConfig struct {
+	Port     int
+	Database string
+}
+
 type RaftConfig struct {
 	Port int
 	Dir  string
@@ -157,6 +162,7 @@ type WalConfig struct {
 type TomlConfiguration struct {
 	Admin       AdminConfig
 	Api         ApiConfig
+	OpenTSDB    OpenTSDBConfig
 	Raft        RaftConfig
 	Storage     StorageConfig
 	Cluster     ClusterConfig
@@ -174,6 +180,8 @@ type Configuration struct {
 	ApiHttpSslPort            int
 	ApiHttpCertPath           string
 	ApiHttpPort               int
+	OpenTSDBPort              int
+	OpenTSDBDatabase          string
 	RaftServerPort            int
 	SeedServers               []string
 	DataDir                   string
@@ -249,6 +257,8 @@ func parseTomlConfiguration(filename string) (*Configuration, error) {
 		ApiHttpPort:               tomlConfiguration.Api.Port,
 		ApiHttpCertPath:           tomlConfiguration.Api.SslCertPath,
 		ApiHttpSslPort:            tomlConfiguration.Api.SslPort,
+		OpenTSDBPort:              tomlConfiguration.OpenTSDB.Port,
+		OpenTSDBDatabase:          tomlConfiguration.OpenTSDB.Database,
 		RaftServerPort:            tomlConfiguration.Raft.Port,
 		RaftDir:                   tomlConfiguration.Raft.Dir,
 		ProtobufPort:              tomlConfiguration.Cluster.ProtobufPort,
@@ -337,6 +347,14 @@ func (self *Configuration) ApiHttpPortString() string {
 
 func (self *Configuration) ApiHttpSslPortString() string {
 	return fmt.Sprintf("%s:%d", self.BindAddress, self.ApiHttpSslPort)
+}
+
+func (self *Configuration) OpenTSDBPortString() string {
+	if self.OpenTSDBPort <= 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("%s:%d", self.BindAddress, self.OpenTSDBPort)
 }
 
 func (self *Configuration) ProtobufPortString() string {
